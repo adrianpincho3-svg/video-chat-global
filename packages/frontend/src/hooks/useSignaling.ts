@@ -45,6 +45,18 @@ interface UseSignalingReturn {
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
+// Verificar configuración
+if (typeof window !== 'undefined') {
+  console.log('🔧 Configuración de Backend:');
+  console.log('   VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
+  console.log('   URL efectiva:', BACKEND_URL);
+  
+  if (!import.meta.env.VITE_BACKEND_URL) {
+    console.warn('⚠️ VITE_BACKEND_URL no está configurada!');
+    console.warn('   Configúrala en Vercel → Settings → Environment Variables');
+  }
+}
+
 export function useSignaling(): UseSignalingReturn {
   const socketRef = useRef<SignalingSocket | null>(null);
   const [connected, setConnected] = useState(false);
