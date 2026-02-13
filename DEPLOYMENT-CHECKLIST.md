@@ -1,170 +1,107 @@
-# ✅ Checklist de Despliegue - Random Video Chat
+# ✅ CHECKLIST DE DESPLIEGUE
 
-## Pre-Despliegue
+## Estado Actual
+- ✅ Código completo en GitHub
+- ✅ Frontend desplegado en Vercel
+- ❌ Backend SIN desplegar
+- ❌ App NO funcional
 
-- [ ] Código subido a GitHub
-- [ ] Variables de entorno preparadas
-- [ ] Contraseñas seguras generadas
-- [ ] Plataforma de despliegue seleccionada
+## Lo que necesitas hacer (en orden)
 
-## Despliegue en Railway (Opción Recomendada)
+### 1️⃣ Desplegar Backend (10 minutos)
 
-### 1. Configuración Inicial
-- [ ] Cuenta creada en [Railway.app](https://railway.app)
-- [ ] Repositorio conectado desde GitHub
-- [ ] Proyecto creado en Railway
+Elige UNA opción:
 
-### 2. Bases de Datos
-- [ ] PostgreSQL agregado al proyecto
-- [ ] Redis agregado al proyecto
-- [ ] Credenciales verificadas (Railway las configura automáticamente)
+#### Opción A: Render.com (RECOMENDADO)
+- [ ] Ir a https://render.com
+- [ ] Registrarse con GitHub
+- [ ] Crear "New Web Service"
+- [ ] Conectar repo: `adrianpincho3-svg/video-chat-global`
+- [ ] Configurar:
+  - Name: `video-chat-backend`
+  - Root Directory: `packages/backend`
+  - Runtime: Docker
+  - Instance Type: Free
+- [ ] Agregar variables de entorno:
+  - `NODE_ENV` = `production`
+  - `PORT` = `8080`
+  - `AI_PROVIDER` = `mock`
+- [ ] Hacer clic en "Create Web Service"
+- [ ] Esperar 3-5 minutos
+- [ ] Copiar la URL (ejemplo: `https://video-chat-backend.onrender.com`)
 
-### 3. Variables de Entorno
-- [ ] `NODE_ENV=production`
-- [ ] `PORT=4000`
-- [ ] `FRONTEND_URL` configurada
-- [ ] `AI_PROVIDER=mock` (o con API key si usas OpenAI/Anthropic)
-- [ ] `DATABASE_URL` (automático desde Railway)
-- [ ] `REDIS_URL` (automático desde Railway)
+📖 Guía detallada: `DESPLEGAR-AHORA.md`
 
-### 4. Configuración de Build
-- [ ] Build Command: `npm ci && npm run build --workspace=packages/backend`
-- [ ] Start Command: `npm run start:prod --workspace=packages/backend`
-- [ ] Root Directory: `/` (raíz del proyecto)
+#### Opción B: Railway.app
+- [ ] Ir a https://railway.app
+- [ ] Registrarse con GitHub
+- [ ] "New Project" → "Deploy from GitHub repo"
+- [ ] Seleccionar tu repo
+- [ ] Agregar las mismas 3 variables de entorno
+- [ ] Deploy
+- [ ] Copiar la URL
 
-### 5. Despliegue
-- [ ] Primer deploy ejecutado
-- [ ] Logs revisados (sin errores)
-- [ ] Health check pasando
-- [ ] Migraciones ejecutadas automáticamente
+#### Opción C: Ejecutar localmente (solo para probar)
+```bash
+cd C:\Users\adria\Desktop\omegles\packages\backend
+npm install
+npm start
+```
+URL será: `http://localhost:8080`
 
-### 6. Frontend en Vercel
-- [ ] Cuenta creada en [Vercel.com](https://vercel.com)
-- [ ] Repositorio importado
-- [ ] Framework: Vite
-- [ ] Root Directory: `packages/frontend`
-- [ ] Build Command: `npm run build`
-- [ ] Output Directory: `dist`
-- [ ] Variable `VITE_BACKEND_URL` configurada con URL de Railway
-- [ ] Deploy ejecutado
+### 2️⃣ Actualizar Vercel (2 minutos)
 
-### 7. Crear Administrador
-- [ ] Comando ejecutado: `npm run create-admin --workspace=packages/backend`
-- [ ] Credenciales guardadas en lugar seguro
-- [ ] Login probado en `/admin/login`
+- [ ] Ir a https://vercel.com/dashboard
+- [ ] Seleccionar proyecto `video-chat-global-final`
+- [ ] Settings → Environment Variables
+- [ ] Editar `VITE_BACKEND_URL`
+- [ ] Pegar la URL del backend (SIN barra al final)
+- [ ] Guardar
+- [ ] Deployments → Redeploy
 
-## Post-Despliegue
+📖 Guía detallada: `CONFIGURAR-VERCEL-AHORA.md`
 
-### Verificación Funcional
-- [ ] Página de inicio carga correctamente
-- [ ] Botón "Iniciar Chat" funciona
-- [ ] Filtros de selección funcionan
-- [ ] Sala de espera muestra correctamente
-- [ ] Video chat se conecta (probar con 2 dispositivos)
-- [ ] Chat de texto funciona
-- [ ] Botón "Siguiente" funciona
-- [ ] Enlaces compartibles funcionan
-- [ ] Panel de administrador accesible
-- [ ] Métricas se muestran correctamente
+### 3️⃣ Verificar que funciona (1 minuto)
 
-### Verificación Técnica
-- [ ] HTTPS habilitado (automático en Railway/Vercel)
-- [ ] WebSocket conecta correctamente
-- [ ] No hay errores en consola del navegador
-- [ ] No hay errores en logs del servidor
-- [ ] Health check endpoint responde: `/health`
-- [ ] CORS configurado correctamente
+- [ ] Abrir https://video-chat-global-final.vercel.app
+- [ ] Verificar que dice "Backend Conectado ✓" en verde
+- [ ] Si usa Render y está dormido, esperar 30-60 segundos y recargar
+- [ ] Probar hacer clic en "Empezar a Chatear"
 
-### Seguridad
-- [ ] Contraseñas seguras (min 32 caracteres)
-- [ ] Variables de entorno no expuestas en frontend
-- [ ] HTTPS forzado
-- [ ] Headers de seguridad configurados
-- [ ] Rate limiting habilitado (si aplica)
+## ¿Dónde estás?
 
-### Monitoreo
-- [ ] Logs accesibles en Railway
-- [ ] Métricas visibles en panel de admin
-- [ ] Alertas configuradas (opcional)
+Marca con una X donde estás:
 
-## Pruebas con Usuarios Reales
+- [ ] No he empezado
+- [ ] Estoy desplegando el backend
+- [ ] Backend desplegado, actualizando Vercel
+- [ ] Todo listo, probando la app
+- [ ] ¡Funciona! 🎉
 
-- [ ] Probar con 2 usuarios simultáneos
-- [ ] Probar en diferentes navegadores (Chrome, Firefox, Safari)
-- [ ] Probar en móvil (iOS y Android)
-- [ ] Probar permisos de cámara/micrófono
-- [ ] Probar reconexión después de desconexión
-- [ ] Probar función "siguiente"
-- [ ] Probar enlaces compartibles
-- [ ] Probar reportar usuario
-- [ ] Probar bloqueo de usuario desde admin
+## Si algo falla
 
-## Optimización (Opcional)
+1. Lee el archivo `DIAGNOSTICO-RAPIDO.md`
+2. Comparte:
+   - Qué opción elegiste
+   - El error exacto que ves
+   - Captura de pantalla
 
-- [ ] Configurar CDN para assets estáticos
-- [ ] Configurar dominio personalizado
-- [ ] Configurar SSL personalizado
-- [ ] Configurar backups automáticos
-- [ ] Configurar monitoreo avanzado (Sentry, etc.)
-- [ ] Configurar analytics (opcional)
+## Archivos útiles
 
-## Troubleshooting Común
+- `DESPLEGAR-AHORA.md` - Guía paso a paso para Render
+- `CONFIGURAR-VERCEL-AHORA.md` - Cómo actualizar Vercel
+- `DIAGNOSTICO-RAPIDO.md` - Entender el problema
+- `docs/RAILWAY-DEPLOY.md` - Guía para Railway
+- `DEPLOY-FLYIO-FACIL.md` - Guía para Fly.io
 
-### ❌ Backend no inicia
-- Revisar logs en Railway
-- Verificar variables de entorno
-- Verificar conexión a bases de datos
+## Tiempo total estimado
 
-### ❌ Frontend no conecta con backend
-- Verificar `VITE_BACKEND_URL` en Vercel
-- Verificar CORS en backend
-- Verificar que backend esté corriendo
-
-### ❌ WebRTC no funciona
-- Verificar que HTTPS esté habilitado
-- Verificar permisos de cámara/micrófono
-- Verificar que Socket.io esté conectado
-
-### ❌ Base de datos no conecta
-- Verificar que PostgreSQL esté corriendo en Railway
-- Verificar `DATABASE_URL` en variables de entorno
-- Revisar logs de conexión
-
-## URLs Finales
-
-Después del despliegue, anota tus URLs:
-
-- **Frontend**: ___________________________________
-- **Backend**: ___________________________________
-- **Admin Panel**: ___________________________________
-- **GitHub Repo**: ___________________________________
-
-## Credenciales de Administrador
-
-- **Usuario**: ___________________________________
-- **Contraseña**: ___________________________________
-
-⚠️ **IMPORTANTE**: Guarda estas credenciales en un lugar seguro (1Password, LastPass, etc.)
-
-## Costos Estimados
-
-- **Railway Free Tier**: $5 crédito gratis/mes
-- **Vercel Free Tier**: Gratis para proyectos personales
-- **Total**: $0/mes (con límites de free tier)
-
-Si necesitas más recursos:
-- **Railway Hobby**: $5/mes
-- **Vercel Pro**: $20/mes
-
-## Siguiente Paso
-
-✅ **¡Despliegue completado!**
-
-Comparte la URL con amigos y prueba la aplicación con usuarios reales.
+- Render: 12 minutos
+- Railway: 10 minutos
+- Local: 2 minutos
 
 ---
 
-**Fecha de despliegue**: _______________
-**Desplegado por**: _______________
-**Versión**: 1.0.0
+**IMPORTANTE:** Solo necesitas hacer los pasos 1 y 2. El paso 3 es solo verificación.
 
+**RECUERDA:** El backend está 100% listo. Solo necesita estar corriendo en un servidor.
