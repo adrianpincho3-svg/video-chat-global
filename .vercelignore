@@ -5,5 +5,5 @@ node_modules
 packages/backend
 docs
 .kiro
-*.md
-!packages/frontend/README.md
+*.log
+.DS_Store
