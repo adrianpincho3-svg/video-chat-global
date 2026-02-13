@@ -80,7 +80,10 @@ export class MatchingManager {
     // Obtener todos los usuarios en espera de la cola global
     const userIds = await getList('waiting_queue:any');
 
+    console.log(`🔍 Intentando match. Usuarios en cola: ${userIds.length}`);
+
     if (userIds.length < 2) {
+      console.log(`⚠️ No hay suficientes usuarios para match (mínimo 2, hay ${userIds.length})`);
       return null;
     }
 
@@ -92,7 +95,13 @@ export class MatchingManager {
     // Filtrar usuarios válidos
     const validUsers = users.filter((u): u is WaitingUser => u !== null);
 
+    console.log(`✅ Usuarios válidos: ${validUsers.length}`);
+    validUsers.forEach(u => {
+      console.log(`   - ${u.userId}: ${u.category} busca ${u.filter} (región: ${u.region}, prefiere: ${u.regionFilter})`);
+    });
+
     if (validUsers.length < 2) {
+      console.log(`⚠️ No hay suficientes usuarios válidos para match`);
       return null;
     }
 
@@ -106,12 +115,16 @@ export class MatchingManager {
         const user2 = validUsers[j];
 
         // Verificar compatibilidad básica
-        if (!this.areCompatible(user1, user2)) {
+        const compatible = this.areCompatible(user1, user2);
+        console.log(`🔄 Comparando ${user1.userId} y ${user2.userId}: compatible=${compatible}`);
+
+        if (!compatible) {
           continue;
         }
 
         // Calcular score
         const score = this.calculateMatchScore(user1, user2);
+        console.log(`   Score: ${score}`);
 
         if (score > bestScore) {
           bestScore = score;
@@ -126,6 +139,7 @@ export class MatchingManager {
       return [user1.userId, user2.userId];
     }
 
+    console.log(`❌ No se encontró ningún match compatible`);
     return null;
   }
 
