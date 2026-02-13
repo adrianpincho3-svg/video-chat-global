@@ -4,9 +4,8 @@ services:
     env: node
     region: oregon
     plan: free
-    rootDir: packages/backend
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: cd packages/backend && npm install --production=false
+    startCommand: cd packages/backend && npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
