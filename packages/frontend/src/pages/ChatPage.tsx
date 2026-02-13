@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useSignaling } from '../hooks/useSignaling';
 import { useWebRTC } from '../hooks/useWebRTC';
@@ -23,6 +23,8 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [mediaInitialized, setMediaInitialized] = useState(false);
+  const [isInitializingMedia, setIsInitializingMedia] = useState(false);
 
   // Manejar evento de match
   useEffect(() => {
@@ -41,19 +43,15 @@ export default function ChatPage() {
       
       dispatch({ type: 'SET_SESSION_STATE', payload: 'in-chat' });
       setCurrentSessionId(data.sessionId);
-      setMediaError(null); // Limpiar errores previos
       
-      // Inicializar media y crear oferta
+      // La media ya debería estar inicializada, solo crear oferta
       try {
-        await webrtc.initializeMedia();
         const offer = await webrtc.createOffer();
         if (offer) {
           signaling.sendOffer(offer);
         }
       } catch (error: any) {
-        console.error('Error al inicializar media:', error);
-        const errorMessage = error.message || 'No se pudo acceder a la cámara o micrófono. Verifica los permisos.';
-        setMediaError(errorMessage);
+        console.error('Error al crear oferta:', error);
       }
     };
 
@@ -69,18 +67,26 @@ export default function ChatPage() {
     const handleOffer = async (data: { offer: RTCSessionDescriptionInit }) => {
       console.log('📥 Oferta recibida');
       
-      setMediaError(null); // Limpiar errores previos
+      // Si no tenemos media inicializada, inicializarla ahora
+      if (!mediaInitialized) {
+        try {
+          await webrtc.initializeMedia();
+          setMediaInitialized(true);
+        } catch (error: any) {
+          console.error('Error al inicializar media:', error);
+          const errorMessage = error.message || 'No se pudo acceder a la cámara o micrófono.';
+          setMediaError(errorMessage);
+          return;
+        }
+      }
       
       try {
-        await webrtc.initializeMedia();
         const answer = await webrtc.createAnswer(data.offer);
         if (answer) {
           signaling.sendAnswer(answer);
         }
       } catch (error: any) {
         console.error('Error al procesar oferta:', error);
-        const errorMessage = error.message || 'No se pudo acceder a la cámara o micrófono.';
-        setMediaError(errorMessage);
       }
     };
 
@@ -89,7 +95,7 @@ export default function ChatPage() {
     return () => {
       signaling.off('offer', handleOffer);
     };
-  }, [signaling, webrtc]);
+  }, [signaling, webrtc, mediaInitialized]);
 
   // Manejar respuesta WebRTC
   useEffect(() => {
@@ -186,13 +192,33 @@ export default function ChatPage() {
     };
   }, [signaling, dispatch]);
 
-  // Iniciar búsqueda
-  const handleStartChat = useCallback((
+  // Inicializar búsqueda
+  const handleStartChat = useCallback(async (
     userCategory: UserCategory,
     filter: MatchingFilter,
     regionFilter: Region
   ) => {
     console.log('🔍 Iniciando búsqueda...', { userCategory, filter, regionFilter });
+    
+    // Inicializar media ANTES de buscar pareja
+    if (!mediaInitialized) {
+      setIsInitializingMedia(true);
+      setMediaError(null);
+      
+      try {
+        await webrtc.initializeMedia();
+        setMediaInitialized(true);
+        console.log('✅ Media inicializada correctamente');
+      } catch (error: any) {
+        console.error('❌ Error al inicializar media:', error);
+        const errorMessage = error.message || 'No se pudo acceder a la cámara o micrófono. Verifica los permisos.';
+        setMediaError(errorMessage);
+        setIsInitializingMedia(false);
+        return; // No continuar si falla la media
+      }
+      
+      setIsInitializingMedia(false);
+    }
     
     dispatch({ type: 'SET_USER_CATEGORY', payload: userCategory });
     dispatch({ type: 'SET_MATCHING_FILTER', payload: filter });
@@ -200,7 +226,7 @@ export default function ChatPage() {
     dispatch({ type: 'SET_SESSION_STATE', payload: 'waiting' });
     
     signaling.startMatching(userCategory, filter, regionFilter);
-  }, [signaling, dispatch]);
+  }, [signaling, dispatch, webrtc, mediaInitialized]);
 
   // Cancelar búsqueda
   const handleCancelSearch = useCallback(() => {
@@ -291,11 +317,62 @@ export default function ChatPage() {
 
       case 'filter-selection':
         return (
-          <FilterSelection
-            onStartChat={handleStartChat}
-            onCancel={() => dispatch({ type: 'SET_SESSION_STATE', payload: 'idle' })}
-            detectedRegion={state.detectedRegion}
-          />
+          <>
+            {/* Preview de cámara local */}
+            {webrtc.localStream && (
+              <div className="mb-6">
+                <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-md mx-auto">
+                  <div className="relative bg-gray-900 aspect-video">
+                    <video
+                      ref={(video) => {
+                        if (video && webrtc.localStream) {
+                          video.srcObject = webrtc.localStream;
+                        }
+                      }}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover mirror"
+                    />
+                    <div className="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2">
+                      <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                      <span>Cámara activa</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Indicador de inicialización */}
+            {isInitializingMedia && (
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                <div className="flex items-center space-x-3">
+                  <svg
+                    className="w-5 h-5 text-blue-600 animate-spin"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium text-blue-800">
+                    Activando cámara y micrófono...
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            <FilterSelection
+              onStartChat={handleStartChat}
+              onCancel={() => dispatch({ type: 'SET_SESSION_STATE', payload: 'idle' })}
+              detectedRegion={state.detectedRegion}
+            />
+          </>
         );
 
       case 'waiting':
