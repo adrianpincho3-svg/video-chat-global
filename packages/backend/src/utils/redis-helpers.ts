@@ -1,9 +1,38 @@
-import { getRedisClient } from '../config/redis';
+import { getRedisClient, isRedisConnected } from '../config/redis';
+
+// Almacenamiento en memoria como fallback
+const memoryStore = new Map<string, any>();
+const memoryLists = new Map<string, string[]>();
+const memorySets = new Map<string, Set<string>>();
+const memoryCounters = new Map<string, number>();
+const memoryExpires = new Map<string, number>();
+
+// Limpiar datos expirados cada minuto
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, expireTime] of memoryExpires.entries()) {
+    if (expireTime <= now) {
+      memoryStore.delete(key);
+      memoryLists.delete(key);
+      memorySets.delete(key);
+      memoryCounters.delete(key);
+      memoryExpires.delete(key);
+    }
+  }
+}, 60000);
 
 /**
- * Guarda un hash en Redis
+ * Guarda un hash en Redis o memoria
  */
 export async function setHash(key: string, data: Record<string, any>, ttl?: number): Promise<void> {
+  if (!isRedisConnected()) {
+    memoryStore.set(key, { ...data });
+    if (ttl) {
+      memoryExpires.set(key, Date.now() + ttl * 1000);
+    }
+    return;
+  }
+
   const client = getRedisClient();
   
   // Convertir valores a strings, manejando correctamente todos los tipos
@@ -26,9 +55,21 @@ export async function setHash(key: string, data: Record<string, any>, ttl?: numb
 }
 
 /**
- * Obtiene un hash de Redis
+ * Obtiene un hash de Redis o memoria
  */
 export async function getHash(key: string): Promise<Record<string, string> | null> {
+  if (!isRedisConnected()) {
+    const data = memoryStore.get(key);
+    if (!data) return null;
+    
+    // Convertir a formato string como lo haría Redis
+    const stringData: Record<string, string> = {};
+    for (const [field, value] of Object.entries(data)) {
+      stringData[field] = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    }
+    return stringData;
+  }
+
   const client = getRedisClient();
   const data = await client.hGetAll(key);
   
@@ -63,9 +104,19 @@ export async function getHashParsed<T>(key: string): Promise<T | null> {
 }
 
 /**
- * Elimina una clave de Redis
+ * Elimina una clave de Redis o memoria
  */
 export async function deleteKey(key: string): Promise<boolean> {
+  if (!isRedisConnected()) {
+    const had = memoryStore.has(key) || memoryLists.has(key) || memorySets.has(key) || memoryCounters.has(key);
+    memoryStore.delete(key);
+    memoryLists.delete(key);
+    memorySets.delete(key);
+    memoryCounters.delete(key);
+    memoryExpires.delete(key);
+    return had;
+  }
+
   const client = getRedisClient();
   const result = await client.del(key);
   return result > 0;
@@ -75,6 +126,14 @@ export async function deleteKey(key: string): Promise<boolean> {
  * Agrega un elemento a una lista
  */
 export async function pushToList(key: string, value: string): Promise<void> {
+  if (!isRedisConnected()) {
+    if (!memoryLists.has(key)) {
+      memoryLists.set(key, []);
+    }
+    memoryLists.get(key)!.push(value);
+    return;
+  }
+
   const client = getRedisClient();
   await client.rPush(key, value);
 }
@@ -83,6 +142,17 @@ export async function pushToList(key: string, value: string): Promise<void> {
  * Remueve un elemento de una lista
  */
 export async function removeFromList(key: string, value: string): Promise<void> {
+  if (!isRedisConnected()) {
+    const list = memoryLists.get(key);
+    if (list) {
+      const index = list.indexOf(value);
+      if (index > -1) {
+        list.splice(index, 1);
+      }
+    }
+    return;
+  }
+
   const client = getRedisClient();
   await client.lRem(key, 0, value);
 }
@@ -91,6 +161,10 @@ export async function removeFromList(key: string, value: string): Promise<void> 
  * Obtiene todos los elementos de una lista
  */
 export async function getList(key: string): Promise<string[]> {
+  if (!isRedisConnected()) {
+    return memoryLists.get(key) || [];
+  }
+
   const client = getRedisClient();
   return await client.lRange(key, 0, -1);
 }

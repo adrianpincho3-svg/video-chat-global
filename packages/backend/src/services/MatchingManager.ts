@@ -9,12 +9,25 @@ import {
   getList,
 } from '../utils/redis-helpers';
 import { geoIPService } from './GeoIPService';
+import { isRedisConnected } from '../config/redis';
 
 /**
  * Gestor de emparejamiento de usuarios
  * Maneja la cola de espera y el algoritmo de matching con filtros
  */
 export class MatchingManager {
+  // Almacenamiento en memoria cuando Redis no está disponible
+  private memoryQueue: Map<string, WaitingUser> = new Map();
+  private memoryQueueByRegion: Map<Region | 'any', Set<string>> = new Map();
+
+  constructor() {
+    // Inicializar colas por región
+    const regions: (Region | 'any')[] = ['north-america', 'south-america', 'europe', 'asia', 'africa', 'oceania', 'any'];
+    regions.forEach(region => {
+      this.memoryQueueByRegion.set(region, new Set());
+    });
+  }
+
   /**
    * Agrega un usuario a la cola de espera
    */
@@ -35,18 +48,26 @@ export class MatchingManager {
       offeredBot: false,
     };
 
-    // Guardar datos del usuario
-    await setHash(
-      `waiting_user:${userId}`,
-      waitingUser,
-      LIMITS.WAITING_QUEUE_TTL
-    );
+    // Si Redis está disponible, usar Redis
+    if (isRedisConnected()) {
+      // Guardar datos del usuario
+      await setHash(
+        `waiting_user:${userId}`,
+        waitingUser,
+        LIMITS.WAITING_QUEUE_TTL
+      );
 
-    // Agregar a la cola de su región
-    await pushToList(`waiting_queue:${region}`, userId);
+      // Agregar a la cola de su región
+      await pushToList(`waiting_queue:${region}`, userId);
 
-    // También agregar a la cola global para búsqueda cross-region
-    await pushToList('waiting_queue:any', userId);
+      // También agregar a la cola global para búsqueda cross-region
+      await pushToList('waiting_queue:any', userId);
+    } else {
+      // Usar memoria
+      this.memoryQueue.set(userId, waitingUser);
+      this.memoryQueueByRegion.get(region)?.add(userId);
+      this.memoryQueueByRegion.get('any')?.add(userId);
+    }
 
     console.log(`✅ Usuario ${userId} agregado a cola (${category}, busca ${filter}, región ${region})`);
   }
@@ -55,19 +76,29 @@ export class MatchingManager {
    * Remueve un usuario de la cola de espera
    */
   async removeFromQueue(userId: string): Promise<void> {
-    // Obtener datos del usuario para saber de qué cola removerlo
-    const user = await this.getWaitingUser(userId);
-    
-    if (user) {
-      // Remover de la cola de su región
-      await removeFromList(`waiting_queue:${user.region}`, userId);
+    if (isRedisConnected()) {
+      // Obtener datos del usuario para saber de qué cola removerlo
+      const user = await this.getWaitingUser(userId);
       
-      // Remover de la cola global
-      await removeFromList('waiting_queue:any', userId);
-    }
+      if (user) {
+        // Remover de la cola de su región
+        await removeFromList(`waiting_queue:${user.region}`, userId);
+        
+        // Remover de la cola global
+        await removeFromList('waiting_queue:any', userId);
+      }
 
-    // Eliminar datos del usuario
-    await deleteKey(`waiting_user:${userId}`);
+      // Eliminar datos del usuario
+      await deleteKey(`waiting_user:${userId}`);
+    } else {
+      // Usar memoria
+      const user = this.memoryQueue.get(userId);
+      if (user) {
+        this.memoryQueueByRegion.get(user.region)?.delete(userId);
+        this.memoryQueueByRegion.get('any')?.delete(userId);
+      }
+      this.memoryQueue.delete(userId);
+    }
 
     console.log(`✅ Usuario ${userId} removido de cola`);
   }
@@ -77,8 +108,15 @@ export class MatchingManager {
    * Retorna par de userIds si hay match, null si no
    */
   async tryMatch(): Promise<[string, string] | null> {
-    // Obtener todos los usuarios en espera de la cola global
-    const userIds = await getList('waiting_queue:any');
+    let userIds: string[];
+
+    if (isRedisConnected()) {
+      // Obtener todos los usuarios en espera de la cola global
+      userIds = await getList('waiting_queue:any');
+    } else {
+      // Usar memoria
+      userIds = Array.from(this.memoryQueueByRegion.get('any') || []);
+    }
 
     console.log(`🔍 Intentando match. Usuarios en cola: ${userIds.length}`);
 
@@ -240,11 +278,16 @@ export class MatchingManager {
     // Marcar como ofrecido si corresponde
     if (shouldOffer) {
       user.offeredBot = true;
-      await setHash(
-        `waiting_user:${userId}`,
-        user,
-        LIMITS.WAITING_QUEUE_TTL
-      );
+      
+      if (isRedisConnected()) {
+        await setHash(
+          `waiting_user:${userId}`,
+          user,
+          LIMITS.WAITING_QUEUE_TTL
+        );
+      } else {
+        this.memoryQueue.set(userId, user);
+      }
     }
 
     return shouldOffer;
@@ -254,7 +297,11 @@ export class MatchingManager {
    * Obtiene los datos de un usuario en espera
    */
   private async getWaitingUser(userId: string): Promise<WaitingUser | null> {
-    return await getHashParsed<WaitingUser>(`waiting_user:${userId}`);
+    if (isRedisConnected()) {
+      return await getHashParsed<WaitingUser>(`waiting_user:${userId}`);
+    } else {
+      return this.memoryQueue.get(userId) || null;
+    }
   }
 
   /**
@@ -265,7 +312,14 @@ export class MatchingManager {
     byRegion: Record<Region, number>;
     byCategory: Record<UserCategory, number>;
   }> {
-    const userIds = await getList('waiting_queue:any');
+    let userIds: string[];
+
+    if (isRedisConnected()) {
+      userIds = await getList('waiting_queue:any');
+    } else {
+      userIds = Array.from(this.memoryQueueByRegion.get('any') || []);
+    }
+
     const users = await Promise.all(
       userIds.map(id => this.getWaitingUser(id))
     );
