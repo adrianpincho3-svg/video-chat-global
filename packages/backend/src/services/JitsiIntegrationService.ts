@@ -1,17 +1,38 @@
 import crypto from 'crypto';
 
 /**
- * Servicio de integración con Jitsi Meet
- * Permite crear salas de video usando la infraestructura pública de Jitsi
+ * Servidores de Jitsi disponibles (todos gratuitos y públicos)
+ */
+const JITSI_SERVERS = [
+  { name: 'Jitsi Meet', domain: 'meet.jit.si', region: 'Global' },
+  { name: '8x8 Video Meet', domain: '8x8.vc', region: 'Global' },
+  { name: 'Jitsi Framatalk', domain: 'framatalk.org/jitsi', region: 'Europe' },
+];
+
+/**
+ * Servicio de integración con múltiples servidores de Jitsi Meet
+ * Distribuye la carga entre varios servidores públicos
  */
 export class JitsiIntegrationService {
-  private jitsiDomain: string;
+  private jitsiServers: typeof JITSI_SERVERS;
   private usePublicInstance: boolean;
 
   constructor() {
-    // Usar instancia pública de Jitsi por defecto
-    this.jitsiDomain = process.env.JITSI_DOMAIN || 'meet.jit.si';
+    // Usar múltiples instancias públicas de Jitsi
+    this.jitsiServers = JITSI_SERVERS;
     this.usePublicInstance = !process.env.JITSI_DOMAIN;
+    
+    console.log(`✅ Jitsi Integration: ${this.jitsiServers.length} servidores disponibles`);
+  }
+
+  /**
+   * Selecciona un servidor aleatorio para distribuir la carga
+   */
+  private selectRandomServer() {
+    const randomIndex = Math.floor(Math.random() * this.jitsiServers.length);
+    const server = this.jitsiServers[randomIndex];
+    console.log(`🎲 Servidor seleccionado: ${server.name} (${server.region})`);
+    return server;
   }
 
   /**
@@ -33,11 +54,14 @@ export class JitsiIntegrationService {
     startWithVideoMuted?: boolean;
   }) {
     const roomName = this.generateRoomName(sessionId);
+    const server = this.selectRandomServer(); // Seleccionar servidor aleatorio
     
     return {
       roomName,
-      domain: this.jitsiDomain,
-      url: `https://${this.jitsiDomain}/${roomName}`,
+      domain: server.domain,
+      serverName: server.name,
+      serverRegion: server.region,
+      url: `https://${server.domain}/${roomName}`,
       config: {
         // Configuración de la interfaz
         prejoinPageEnabled: false,
@@ -100,7 +124,7 @@ export class JitsiIntegrationService {
   /**
    * Genera un JWT token para autenticación (si se usa instancia privada)
    */
-  generateJWT(roomName: string, userId: string, displayName: string): string | null {
+  generateJWT(roomName: string, userId: string, displayName: string, domain: string): string | null {
     const jitsiSecret = process.env.JITSI_SECRET;
     const jitsiAppId = process.env.JITSI_APP_ID;
 
@@ -122,7 +146,7 @@ export class JitsiIntegrationService {
       },
       aud: jitsiAppId,
       iss: jitsiAppId,
-      sub: this.jitsiDomain,
+      sub: domain,
       room: roomName,
       exp: Math.floor(Date.now() / 1000) + (60 * 60) // 1 hora
     };
@@ -178,17 +202,19 @@ export class JitsiIntegrationService {
   }
 
   /**
-   * Obtiene información sobre la instancia de Jitsi
+   * Obtiene información sobre las instancias de Jitsi
    */
   getInstanceInfo() {
     return {
-      domain: this.jitsiDomain,
+      servers: this.jitsiServers,
+      totalServers: this.jitsiServers.length,
       isPublic: this.usePublicInstance,
       features: {
         jwt: !!process.env.JITSI_SECRET,
         customDomain: !!process.env.JITSI_DOMAIN,
         recording: false, // Requiere configuración adicional
-        streaming: false  // Requiere configuración adicional
+        streaming: false,  // Requiere configuración adicional
+        loadBalancing: true // Distribución de carga entre servidores
       }
     };
   }
