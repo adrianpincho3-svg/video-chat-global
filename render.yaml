@@ -27,4 +27,3 @@ databases:
   - name: video-chat-redis
     plan: free
     region: oregon
-    maxmemoryPolicy: noeviction
