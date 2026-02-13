@@ -1,15 +1,11 @@
-node_modules
-npm-debug.log
-.git
-.gitignore
-README.md
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-packages/frontend
-docs
-.kiro
-.vscode
-*.md
+# Ignorar todo excepto packages/backend
+*
+!packages
+!packages/backend
+!packages/backend/**
+
+# Pero ignorar node_modules dentro de backend
+packages/backend/node_modules
+packages/backend/dist
+packages/backend/.env
+packages/backend/npm-debug.log
