@@ -74,6 +74,16 @@ export function useWebRTC(config?: WebRTCConfig): UseWebRTCReturn {
     try {
       console.log('🎥 Solicitando acceso a cámara y micrófono...');
       
+      // Verificar que getUserMedia esté disponible
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Tu navegador no soporta acceso a cámara/micrófono. Usa Chrome, Firefox o Safari.');
+      }
+
+      // Verificar que estemos en HTTPS (requerido para WebRTC en producción)
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        console.warn('⚠️ WebRTC requiere HTTPS en producción');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -88,16 +98,34 @@ export function useWebRTC(config?: WebRTCConfig): UseWebRTCReturn {
       });
 
       console.log('✅ Acceso a media concedido');
+      console.log('📹 Video tracks:', stream.getVideoTracks().length);
+      console.log('🎤 Audio tracks:', stream.getAudioTracks().length);
+      
       setLocalStream(stream);
 
       // Agregar tracks al peer connection
       const pc = initializePeerConnection();
       stream.getTracks().forEach((track) => {
+        console.log(`➕ Agregando track: ${track.kind} (${track.label})`);
         pc.addTrack(track, stream);
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error al acceder a media:', error);
+      
+      // Mensajes de error más descriptivos
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        throw new Error('Permiso denegado. Por favor, permite el acceso a tu cámara y micrófono.');
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        throw new Error('No se encontró cámara o micrófono. Verifica que estén conectados.');
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        throw new Error('No se puede acceder a la cámara/micrófono. Puede estar en uso por otra aplicación.');
+      } else if (error.name === 'OverconstrainedError') {
+        throw new Error('La configuración de video solicitada no es compatible con tu dispositivo.');
+      } else if (error.name === 'SecurityError') {
+        throw new Error('Error de seguridad. Asegúrate de estar usando HTTPS.');
+      }
+      
       throw error;
     }
   }, [initializePeerConnection]);

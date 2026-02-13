@@ -17,9 +17,38 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 
-// Configurar CORS
+// Configurar CORS - Permitir múltiples orígenes
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173', // Vite dev server
+  process.env.FRONTEND_URL,
+].filter(Boolean); // Remover valores undefined
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Permitir requests sin origin (como Postman, curl, o apps móviles)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Permitir cualquier dominio de Vercel (*.vercel.app)
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Permitir orígenes en la lista
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // En desarrollo, permitir cualquier localhost
+    if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
+      return callback(null, true);
+    }
+    
+    console.warn('⚠️ Origen bloqueado por CORS:', origin);
+    callback(new Error('No permitido por CORS'));
+  },
   credentials: true,
 };
 
