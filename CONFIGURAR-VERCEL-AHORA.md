@@ -1,84 +1,62 @@
-# 🔧 Configurar Vercel AHORA (2 Minutos)
+# ⚡ ACTUALIZAR VERCEL - 2 MINUTOS
 
-## 📋 URL de tu Backend
+## Cuando tengas la URL del backend
 
-Tu backend en Railway está en:
-```
-https://web-production-4415.up.railway.app
-```
+Después de desplegar en Render o Railway, tendrás una URL como:
+- `https://video-chat-backend.onrender.com` (Render)
+- `https://video-chat-backend-production.up.railway.app` (Railway)
 
-## ✅ PASOS EXACTOS
+## Pasos para actualizar Vercel:
 
-### PASO 1: Ir a Vercel (30 segundos)
+### 1. Ir a Vercel
+Abre: https://vercel.com/dashboard
 
-1. Abre tu navegador
-2. Ve a: **https://vercel.com**
-3. Inicia sesión
-4. Abre tu proyecto **"video-chat-global"**
+### 2. Seleccionar tu proyecto
+Haz clic en: `video-chat-global-final`
 
-### PASO 2: Agregar Variable de Entorno (1 minuto)
+### 3. Ir a Settings
+En el menú lateral, haz clic en "Settings"
 
-1. Click en **"Settings"** (arriba)
-2. Click en **"Environment Variables"** (menú izquierdo)
-3. Click en **"Add New"** o **"Edit"** si ya existe
+### 4. Ir a Environment Variables
+En el menú de Settings, haz clic en "Environment Variables"
 
-4. **Agrega o edita**:
-   ```
-   Name: VITE_BACKEND_URL
-   Value: https://web-production-4415.up.railway.app
-   ```
+### 5. Editar VITE_BACKEND_URL
+1. Busca la variable `VITE_BACKEND_URL`
+2. Haz clic en el botón de 3 puntos (⋯) a la derecha
+3. Haz clic en "Edit"
+4. Pega la URL de tu backend (SIN barra al final)
+   - ✅ Correcto: `https://video-chat-backend.onrender.com`
+   - ❌ Incorrecto: `https://video-chat-backend.onrender.com/`
+5. Haz clic en "Save"
 
-5. **Marca las 3 casillas**:
-   - ☑️ Production
-   - ☑️ Preview
-   - ☑️ Development
+### 6. Redeploy
+1. Ve a la pestaña "Deployments"
+2. Haz clic en el botón de 3 puntos (⋯) del último deployment
+3. Haz clic en "Redeploy"
+4. Confirma
 
-6. Click **"Save"**
+### 7. Esperar
+Espera 1-2 minutos mientras Vercel redespliega.
 
-### PASO 3: Redeploy (30 segundos)
+## ¡LISTO! 🎉
 
-1. Ve a **"Deployments"** (arriba)
-2. Click en los **tres puntos (...)** del último deployment
-3. Click en **"Redeploy"**
-4. Espera 2-3 minutos
-
----
-
-## ✅ VERIFICAR QUE FUNCIONA
-
-Después del redeploy:
-
-1. Abre tu app: `https://video-chat-global-final.vercel.app/chat`
-2. El mensaje **"Conectando al servidor..."** debería desaparecer
-3. El mensaje **"Backend No Disponible"** debería desaparecer
-4. Deberías poder hacer click en "Iniciar Chat"
+Tu app debería funcionar ahora en:
+https://video-chat-global-final.vercel.app
 
 ---
 
-## ⚠️ SI EL BACKEND NO FUNCIONA
+## Verificar que funciona
 
-Si después de configurar Vercel sigues viendo "Backend No Disponible":
-
-1. Ve a Railway
-2. Ve a "Deployments"
-3. Verifica que el último deployment diga **"Success"** (verde)
-4. Si dice **"Failed"** (rojo):
-   - Click en "View Logs"
-   - Copia el error
-   - Compártelo conmigo
+1. Abre: https://video-chat-global-final.vercel.app
+2. Deberías ver "Backend Conectado ✓" en verde
+3. Si ves "Backend No Disponible", espera 30-60 segundos (Render tarda en despertar)
+4. Recarga la página
 
 ---
 
-## 🎯 ESTADO ACTUAL
+## Si sigue sin funcionar
 
-✅ **Frontend**: Desplegado en Vercel  
-✅ **Cámara**: Funcionando  
-⏳ **Backend**: Desplegando en Railway  
-❌ **Conexión**: Falta configurar variable en Vercel
-
-Una vez que configures la variable y redeployes, todo debería funcionar.
-
----
-
-**URL del Backend**: `https://web-production-4415.up.railway.app`  
-**Variable en Vercel**: `VITE_BACKEND_URL`
+Compárteme:
+1. La URL de tu backend
+2. Captura de pantalla de la app
+3. Abre la consola del navegador (F12) y compárteme los errores

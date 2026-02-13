@@ -1,152 +1,83 @@
-# 🔍 Diagnóstico Rápido - Video Chat
+# 🔍 DIAGNÓSTICO RÁPIDO
 
-## Problema: "Conectando al servidor..." no desaparece
+## Estado Actual
 
-### ✅ Solución Implementada
+### ✅ Frontend
+- URL: https://video-chat-global-final.vercel.app
+- Estado: Desplegado y funcionando
+- Problema: Muestra "Backend No Disponible"
 
-He corregido dos problemas importantes:
+### ❌ Backend
+- Estado: NO desplegado
+- Código: 100% completo en GitHub
+- Problema: Necesita ser desplegado en un servidor
 
-1. **CORS mejorado**: El backend ahora acepta automáticamente:
-   - Todos los dominios `*.vercel.app`
-   - `localhost` en desarrollo
-   - El dominio configurado en `FRONTEND_URL`
+## ¿Por qué no funciona?
 
-2. **Mejor manejo de errores de cámara**: Ahora verás mensajes claros si hay problemas con permisos de cámara/micrófono.
+El frontend está buscando el backend en la URL configurada en Vercel, pero el backend NO está corriendo en ningún servidor.
 
-### 📋 Checklist de Verificación
+Es como tener un teléfono (frontend) intentando llamar a un número (backend) que no existe.
 
-Marca cada paso que completes:
+## Solución
 
-- [ ] **Backend desplegado en Railway**
-  - Ve a https://railway.app
-  - Verifica que tu proyecto esté "Active" (verde)
-  - Copia la URL pública (ej: `https://web-production-xxxx.up.railway.app`)
+Necesitas desplegar el backend en UNO de estos servicios:
 
-- [ ] **Variables de entorno en Railway**
-  - `NODE_ENV=production` ✓
-  - `AI_PROVIDER=mock` ✓
-  - `FRONTEND_URL=https://tu-app.vercel.app` ⚠️ (usa tu dominio real)
+### Opción 1: Render.com (RECOMENDADO)
+- ✅ Gratis
+- ✅ Fácil de usar
+- ✅ Soporta Docker
+- ⚠️ Se duerme después de 15 min sin uso
+- 📖 Guía: `DESPLEGAR-AHORA.md`
 
-- [ ] **Backend funcionando**
-  - Abre: `https://tu-backend.up.railway.app/health`
-  - Deberías ver: `{"status":"ok",...}`
+### Opción 2: Railway.app
+- ✅ Gratis ($5 crédito inicial)
+- ✅ Muy fácil
+- ✅ Detecta automáticamente Docker
+- ⚠️ Requiere tarjeta de crédito
+- 📖 Guía: `docs/RAILWAY-DEPLOY.md`
 
-- [ ] **Variable en Vercel**
-  - Ve a Vercel → Settings → Environment Variables
-  - `VITE_BACKEND_URL=https://tu-backend.up.railway.app`
-  - Redeploy después de agregar
+### Opción 3: Fly.io
+- ✅ Gratis
+- ✅ Buena performance
+- ⚠️ Requiere CLI
+- ⚠️ Más complejo
+- 📖 Guía: `DEPLOY-FLYIO-FACIL.md`
 
-- [ ] **Redeploy en Vercel**
-  - Deployments → ... → Redeploy
-  - Espera 2-3 minutos
-
-### 🧪 Pruebas
-
-1. **Abrir tu app en Vercel**
-   ```
-   https://tu-app.vercel.app
-   ```
-
-2. **Abrir consola del navegador** (F12)
-
-3. **Buscar estos mensajes**:
-   ```
-   ✅ Conectado al servidor de señalización
-   🎥 Solicitando acceso a cámara y micrófono...
-   ✅ Acceso a media concedido
-   ```
-
-4. **Si ves errores**:
-   - Error de CORS → Verifica `FRONTEND_URL` en Railway
-   - Error de conexión → Verifica que backend esté activo
-   - Error de cámara → Acepta permisos en el navegador
-
-### 🔧 Comandos de Verificación
+### Opción 4: Ejecutar localmente
+- ✅ Gratis
+- ✅ Inmediato
+- ⚠️ Solo para pruebas
+- ⚠️ Tu PC debe estar encendida
 
 ```bash
-# Verificar backend
-curl https://tu-backend.up.railway.app/health
-
-# Debería responder:
-# {"status":"ok","timestamp":"...","services":{...}}
+cd C:\Users\adria\Desktop\omegles\packages\backend
+npm install
+npm start
 ```
 
-### 📊 Estados Esperados
+## ¿Cuál elegir?
 
-| Componente | Estado | URL |
-|------------|--------|-----|
-| Backend (Railway) | Active | `https://web-production-xxxx.up.railway.app` |
-| Frontend (Vercel) | Ready | `https://tu-app.vercel.app` |
-| PostgreSQL | Connected | (automático) |
-| Redis | Connected | (automático) |
+Si quieres la app funcionando YA y en internet: **Render.com**
 
-### ⚠️ Errores Comunes
+Si solo quieres probar que funciona: **Ejecutar localmente**
 
-#### 1. "Conectando al servidor..." permanente
+## Próximos pasos
 
-**Causa**: Backend no desplegado o URL incorrecta
-
-**Solución**:
-1. Verifica que Railway esté activo
-2. Verifica `VITE_BACKEND_URL` en Vercel
-3. Redeploy en Vercel
-
-#### 2. Error de CORS en consola
-
-**Causa**: `FRONTEND_URL` no configurada o incorrecta
-
-**Solución**:
-1. En Railway, agrega `FRONTEND_URL=https://tu-app.vercel.app`
-2. Espera el redeploy automático
-3. Recarga tu app
-
-#### 3. Cámara no se activa
-
-**Causa**: Permisos no otorgados o HTTPS no habilitado
-
-**Solución**:
-1. Verifica que uses HTTPS (automático en Vercel)
-2. Click en el ícono de candado en la barra de direcciones
-3. Permite cámara y micrófono
-4. Recarga la página
-
-#### 4. "No permitido por CORS" en logs de Railway
-
-**Causa**: El código anterior tenía CORS muy restrictivo
-
-**Solución**: Ya está corregido en el último commit. Solo necesitas:
-1. Railway redesplegará automáticamente
-2. O fuerza un redeploy en Railway
-
-### 🎯 Próximos Pasos
-
-Una vez que todo funcione:
-
-1. **Prueba el matching**:
-   - Abre dos ventanas de incógnito
-   - Inicia chat en ambas
-   - Deberían conectarse
-
-2. **Prueba el bot**:
-   - Inicia chat
-   - Espera 10 segundos
-   - Click en "Chatear con Bot"
-
-3. **Prueba Jitsi**:
-   - Ve a `/chat/jitsi`
-   - Inicia chat
-   - Usa Jitsi Meet en lugar de WebRTC nativo
-
-### 📞 Soporte
-
-Si sigues teniendo problemas:
-
-1. Abre la consola del navegador (F12)
-2. Copia todos los mensajes de error
-3. Revisa los logs de Railway (Deployments → View Logs)
-4. Comparte los errores para ayuda específica
+1. Elige una opción
+2. Sigue la guía correspondiente
+3. Obtén la URL del backend
+4. Actualiza `VITE_BACKEND_URL` en Vercel
+5. ¡Listo!
 
 ---
 
-**Última actualización**: Código corregido y subido a GitHub
-**Commit**: "Fix CORS for Vercel domains and improve media error handling"
+## Tiempo estimado
+
+- Render: 10 minutos
+- Railway: 8 minutos
+- Fly.io: 15 minutos
+- Local: 2 minutos
+
+## ¿Necesitas ayuda?
+
+Dime qué opción elegiste y te guío paso a paso.
