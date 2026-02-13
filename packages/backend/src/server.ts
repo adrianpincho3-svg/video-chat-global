@@ -111,6 +111,13 @@ async function startServer() {
 
 // Función para conectar a bases de datos sin bloquear el inicio
 async function connectDatabases() {
+  // MODO SIN BASES DE DATOS: Solo usar memoria
+  console.log('⚠️ MODO SIN BASES DE DATOS: Usando solo memoria RAM');
+  console.log('⚠️ Los datos se perderán al reiniciar el servidor');
+  console.log('✅ Servidor listo para funcionar sin Redis ni PostgreSQL');
+  
+  // Comentado temporalmente para que funcione sin bases de datos
+  /*
   // Intentar conectar a Redis (con reintentos)
   try {
     console.log('📡 Conectando a Redis...');
@@ -143,6 +150,7 @@ async function connectDatabases() {
     console.error('⚠️ No se pudo conectar a PostgreSQL:', error);
     console.log('⚠️ El servidor continuará sin PostgreSQL. Algunas funcionalidades estarán limitadas.');
   }
+  */
 }
 
 // Manejo de cierre graceful
