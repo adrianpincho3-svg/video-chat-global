@@ -10,14 +10,21 @@ let redisClient: RedisClientType | null = null;
  * Soporta tanto REDIS_URL (Render, Heroku) como variables separadas (desarrollo local)
  */
 function getRedisConfig() {
+  // Debug: mostrar qué variables de entorno están disponibles
+  console.log('🔍 Verificando configuración de Redis...');
+  console.log('REDIS_URL existe:', !!process.env.REDIS_URL);
+  console.log('REDIS_HOST:', process.env.REDIS_HOST || 'no definido');
+  
   // Si existe REDIS_URL, usarla (formato: redis://user:pass@host:port)
   if (process.env.REDIS_URL) {
+    console.log('✅ Usando REDIS_URL de Render');
     return {
       url: process.env.REDIS_URL,
     };
   }
   
   // Fallback a configuración por partes (desarrollo local)
+  console.log('⚠️ REDIS_URL no encontrado, usando configuración local');
   return {
     socket: {
       host: process.env.REDIS_HOST || 'localhost',
