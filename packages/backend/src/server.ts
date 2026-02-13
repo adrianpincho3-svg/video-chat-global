@@ -96,7 +96,7 @@ app.get('/health', async (_req, res) => {
 // Inicializar servicios y servidor
 async function startServer() {
   // Iniciar servidor HTTP primero (IMPORTANTE: Railway necesita esto rápido)
-  const PORT = process.env.PORT || 4000;
+  const PORT = Number(process.env.PORT) || 4000;
   const HOST = '0.0.0.0'; // Escuchar en todas las interfaces (necesario para Railway)
   
   httpServer.listen(PORT, HOST, () => {
