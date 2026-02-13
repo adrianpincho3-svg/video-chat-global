@@ -7,17 +7,33 @@ let pool: Pool | null = null;
 
 /**
  * Configuración de PostgreSQL
+ * Soporta tanto DATABASE_URL (Render, Heroku) como variables separadas (desarrollo local)
  */
-const dbConfig = {
-  host: process.env.POSTGRES_HOST || 'localhost',
-  port: parseInt(process.env.POSTGRES_PORT || '5432'),
-  database: process.env.POSTGRES_DB || 'random_video_chat',
-  user: process.env.POSTGRES_USER || 'postgres',
-  password: process.env.POSTGRES_PASSWORD || 'postgres',
-  max: 20, // Máximo de conexiones en el pool
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-};
+function getDatabaseConfig() {
+  // Si existe DATABASE_URL, usarla (formato: postgresql://user:pass@host:port/dbname)
+  if (process.env.DATABASE_URL) {
+    return {
+      connectionString: process.env.DATABASE_URL,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    };
+  }
+  
+  // Fallback a configuración por partes (desarrollo local)
+  return {
+    host: process.env.POSTGRES_HOST || 'localhost',
+    port: parseInt(process.env.POSTGRES_PORT || '5432'),
+    database: process.env.POSTGRES_DB || 'random_video_chat',
+    user: process.env.POSTGRES_USER || 'postgres',
+    password: process.env.POSTGRES_PASSWORD || 'postgres',
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  };
+}
+
+const dbConfig = getDatabaseConfig();
 
 /**
  * Conecta a PostgreSQL y crea el pool de conexiones

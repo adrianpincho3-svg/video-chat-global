@@ -7,14 +7,27 @@ let redisClient: RedisClientType | null = null;
 
 /**
  * Configuración de Redis
+ * Soporta tanto REDIS_URL (Render, Heroku) como variables separadas (desarrollo local)
  */
-const redisConfig = {
-  socket: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-  },
-  password: process.env.REDIS_PASSWORD || undefined,
-};
+function getRedisConfig() {
+  // Si existe REDIS_URL, usarla (formato: redis://user:pass@host:port)
+  if (process.env.REDIS_URL) {
+    return {
+      url: process.env.REDIS_URL,
+    };
+  }
+  
+  // Fallback a configuración por partes (desarrollo local)
+  return {
+    socket: {
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+    },
+    password: process.env.REDIS_PASSWORD || undefined,
+  };
+}
+
+const redisConfig = getRedisConfig();
 
 /**
  * Conecta al servidor Redis
