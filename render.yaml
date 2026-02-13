@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: video-chat-backend
+    env: node
+    region: oregon
+    plan: free
+    rootDir: packages/backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AI_PROVIDER
+        value: mock
+      - key: PORT
+        generateValue: true
+    autoDeploy: true
+
+databases:
+  - name: video-chat-postgres
+    databaseName: videochat
+    user: videochat
+    plan: free
+    region: oregon
+
+  - name: video-chat-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: noeviction
