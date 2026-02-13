@@ -1,0 +1,9 @@
+node_modules
+.git
+.env
+.env.local
+packages/backend
+docs
+.kiro
+*.md
+!packages/frontend/README.md
