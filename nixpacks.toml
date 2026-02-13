@@ -1,17 +1,18 @@
 [phases.setup]
-nixPkgs = ["nodejs-18_x", "npm-9_x"]
+nixPkgs = ["nodejs-18_x"]
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = [
+  "cd packages/backend && npm install"
+]
 
 [phases.build]
 cmds = [
-  "npm run build --workspace=packages/backend"
+  "cd packages/backend && npm run build"
 ]
 
 [start]
-cmd = "npm run start --workspace=packages/backend"
+cmd = "cd packages/backend && npm start"
 
-[healthcheck]
-path = "/health"
-timeout = 30
+[variables]
+NODE_ENV = "production"

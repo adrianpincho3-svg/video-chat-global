@@ -1,1 +1,1 @@
-web: npm run start --workspace=packages/backend
+web: cd packages/backend && npm start
