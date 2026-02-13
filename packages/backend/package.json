@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "start:prod": "npm run start",
+    "start:prod": "bash start.sh",
     "init:prod": "tsx src/scripts/init-production.ts",
     "migrate": "tsx src/migrations/migrate.ts",
     "verify": "tsx src/utils/verify-services.ts",
