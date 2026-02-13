@@ -1,53 +1,23 @@
-# Multi-stage build para optimizar tamaño de imagen
-
-# Stage 1: Build
-FROM node:18-alpine AS builder
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copiar package.json
 COPY package*.json ./
-COPY packages/backend/package*.json ./packages/backend/
 
 # Instalar dependencias
-RUN npm ci --workspace=packages/backend
+RUN npm install
 
 # Copiar código fuente
-COPY packages/backend ./packages/backend
-COPY tsconfig.json ./
-
-# Compilar TypeScript
-RUN npm run build --workspace=packages/backend
-
-# Stage 2: Production
-FROM node:18-alpine
-
-# Crear usuario no-root
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-WORKDIR /app
-
-# Copiar archivos de dependencias
-COPY package*.json ./
-COPY packages/backend/package*.json ./packages/backend/
-
-# Instalar solo dependencias de producción
-RUN npm ci --workspace=packages/backend --omit=dev
-
-# Copiar código compilado desde builder
-COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
-COPY --from=builder /app/packages/backend/src/migrations ./packages/backend/src/migrations
-
-# Cambiar a usuario no-root
-USER nodejs
+COPY . .
 
 # Exponer puerto
-EXPOSE 4000
+EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+# Variables de entorno por defecto
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV AI_PROVIDER=mock
 
-# Comando de inicio
-CMD ["node", "packages/backend/dist/server.js"]
+# Comando de inicio usando tsx
+CMD ["npm", "start"]
